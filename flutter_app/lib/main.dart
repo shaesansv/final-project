@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'screens/scanner_screen.dart';
 
 void main() {
@@ -11,9 +12,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Vulnerability Scanner',
+      title: 'Web Vulnerability Scanner',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.deepPurple,
+        textTheme: TextTheme(
+          displayLarge: GoogleFonts.poppins(
+              fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+          bodyLarge:
+              GoogleFonts.robotoMono(fontSize: 18, color: Colors.white70),
+        ),
+        scaffoldBackgroundColor: Colors.black87,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.yellow,
+          titleTextStyle: GoogleFonts.montserrat(
+              fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
       ),
       home: ScannerScreen(),
     );

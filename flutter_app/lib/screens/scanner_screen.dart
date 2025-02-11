@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:google_fonts/google_fonts.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -37,7 +38,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
         body: json.encode({"url": url}),
       );
 
-      setState(() => _progress = 0.6);
+      for (double i = 0.2; i <= 0.9; i += 0.1) {
+        await Future.delayed(Duration(milliseconds: 200));
+        setState(() => _progress = i);
+      }
 
       if (response.statusCode == 200) {
         setState(() {
@@ -56,107 +60,60 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
   }
 
-  Widget _buildResults() {
-    if (_isLoading) {
-      return Column(
-        children: [
-          LinearProgressIndicator(
-              value: _progress, minHeight: 8, color: Colors.indigoAccent),
-          SizedBox(height: 10),
-          Text("Scanning... ${(100 * _progress).toInt()}%",
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.cyan,
-                  fontFamily: 'RobotoMono')),
-        ],
-      );
-    }
+  Widget _buildProgressBar() {
+    return Column(
+      children: [
+        Stack(
+          children: [
+            LinearProgressIndicator(
+              value: _progress,
+              minHeight: 25,
+              backgroundColor: Colors.grey.shade700,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+            ),
+            Positioned.fill(
+              child: Center(
+                child: Text("${(100 * _progress).toInt()}%",
+                    style: GoogleFonts.robotoMono(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10),
+      ],
+    );
+  }
 
+  Widget _buildResults() {
+    if (_isLoading) return _buildProgressBar();
     if (_error.isNotEmpty) {
       return Text(_error,
-          style: TextStyle(
-              color: Colors.redAccent, fontSize: 16, fontFamily: 'RobotoMono'));
+          style: GoogleFonts.robotoMono(color: Colors.redAccent, fontSize: 16));
     }
-
     if (_results.isEmpty) {
       return Text("No results yet. Enter a URL to start scanning.",
-          style: TextStyle(color: Colors.white, fontFamily: 'RobotoMono'));
+          style: GoogleFonts.robotoMono(color: Colors.white));
     }
-
     return Expanded(
       child: ListView(
         children: _results.entries.map((entry) {
-          final vulnerability = entry.key;
-          final result = entry.value;
-
           return Card(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.symmetric(vertical: 8),
+            margin: EdgeInsets.symmetric(vertical: 8),
             elevation: 6,
-            color: Colors.indigoAccent.shade100,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    vulnerability.toUpperCase(),
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo,
-                        fontFamily: 'Montserrat'),
-                  ),
-                  Divider(color: Colors.indigoAccent),
-                  if (result is Map<String, dynamic>)
-                    ...result.entries.map((subEntry) {
-                      final key = subEntry.key;
-                      final value = subEntry.value;
-
-                      if (key == "results") {
-                        return Column(
-                          children: (value as List<dynamic>).map((item) {
-                            final payload = item["payload"];
-                            final vulnerable = item["vulnerable"];
-                            return ListTile(
-                              leading: Icon(
-                                vulnerable ? Icons.warning : Icons.check_circle,
-                                color: vulnerable
-                                    ? Colors.redAccent
-                                    : Colors.green,
-                              ),
-                              title: Text("Payload: $payload",
-                                  style: TextStyle(fontFamily: 'Montserrat')),
-                              subtitle: Text(
-                                vulnerable ? "Vulnerable" : "Not Vulnerable",
-                                style: TextStyle(
-                                    color: vulnerable
-                                        ? Colors.redAccent
-                                        : Colors.green,
-                                    fontFamily: 'RobotoMono'),
-                              ),
-                            );
-                          }).toList(),
-                        );
-                      } else {
-                        return ListTile(
-                          title: Text("$key: $value",
-                              style: TextStyle(fontFamily: 'Montserrat')),
-                        );
-                      }
-                    })
-                  else
-                    Text(
-                      result.toString(),
-                      style: TextStyle(
-                          color: Colors.blue,
-                          fontSize: 16,
-                          fontFamily: 'Montserrat'),
-                    ),
-                ],
-              ),
+            color: Colors.blueGrey.shade900,
+            child: ListTile(
+              title: Text(entry.key.toUpperCase(),
+                  style: GoogleFonts.montserrat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.lightBlueAccent)),
+              subtitle: Text(entry.value.toString(),
+                  style: GoogleFonts.robotoMono(color: Colors.white70)),
             ),
           );
         }).toList(),
@@ -168,12 +125,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Vulnerability Scanner",
-            style: TextStyle(fontFamily: 'Montserrat')),
-        backgroundColor: Colors.blueAccent,
+        title: Text("Vulnerability Scanner", style: GoogleFonts.montserrat()),
+        backgroundColor: Colors.blueGrey.shade900,
         elevation: 6,
       ),
-      backgroundColor: Colors.black87,
+      backgroundColor: Colors.black,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -181,11 +137,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
           children: [
             TextField(
               controller: _urlController,
-              style: TextStyle(color: Colors.white, fontFamily: 'RobotoMono'),
+              style: GoogleFonts.robotoMono(color: Colors.white),
               decoration: InputDecoration(
                 labelText: "Enter URL",
-                labelStyle:
-                    TextStyle(color: Colors.white70, fontFamily: 'Montserrat'),
+                labelStyle: GoogleFonts.montserrat(color: Colors.white70),
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.link, color: Colors.white70),
                 enabledBorder: OutlineInputBorder(
@@ -207,11 +162,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   elevation: 6,
                 ),
                 child: Text("Scan",
-                    style: TextStyle(
+                    style: GoogleFonts.montserrat(
                         fontSize: 20,
-                        color: Colors.black,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Montserrat')),
+                        color: Colors.black)),
               ),
             ),
             SizedBox(height: 20),
