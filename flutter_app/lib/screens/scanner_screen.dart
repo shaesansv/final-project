@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -58,6 +61,48 @@ class _ScannerScreenState extends State<ScannerScreen> {
         setState(() => _isLoading = false);
       });
     }
+  }
+
+  Future<void> generatePdf() async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text("Vulnerability Scan Report",
+                style:
+                    pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.Text("Scanned URL: ${_urlController.text}",
+                style: pw.TextStyle(fontSize: 16)),
+            pw.SizedBox(height: 20),
+            ..._results.entries.map(
+              (entry) => pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(entry.key.toUpperCase(),
+                      style: pw.TextStyle(
+                          fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(entry.value.toString(),
+                      style: pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 10),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final directory = await getExternalStorageDirectory();
+    final file = File("${directory!.path}/scan_report.pdf");
+    await file.writeAsBytes(await pdf.save());
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("PDF saved to ${file.path}")),
+    );
   }
 
   Widget _buildProgressBar() {
@@ -152,21 +197,37 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
             ),
             SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: scanUrl,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.orangeAccent,
-                  elevation: 6,
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: scanUrl,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: Colors.orangeAccent,
+                      elevation: 6,
+                    ),
+                    child: Text("Scan",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black)),
+                  ),
                 ),
-                child: Text("Scan",
-                    style: GoogleFonts.montserrat(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black)),
-              ),
+                SizedBox(width: 10),
+                if (_results.isNotEmpty)
+                  ElevatedButton.icon(
+                    onPressed: generatePdf,
+                    icon: Icon(Icons.download, color: Colors.black),
+                    label: Text("Download PDF",
+                        style: GoogleFonts.montserrat(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.greenAccent,
+                      elevation: 6,
+                    ),
+                  ),
+              ],
             ),
             SizedBox(height: 20),
             _buildResults(),
